@@ -1,1 +1,125 @@
 
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manju AI</title>
+<style>
+body {
+  margin: 0;
+  background: #101827;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
+.container {
+  padding: 25px;
+  max-width: 600px;
+  margin: auto;
+}
+h1 { color: #00e5ff; }
+#chat {
+  background: #202d40;
+  padding: 15px;
+  height: 350px;
+  overflow-y: auto;
+  border-radius: 12px;
+  text-align: left;
+  margin: 20px 0;
+}
+input {
+  width: 65%;
+  padding: 13px;
+  border-radius: 10px;
+  border: none;
+}
+button {
+  padding: 13px;
+  margin: 5px;
+  border: none;
+  border-radius: 10px;
+  background: #00c9e8;
+  font-weight: bold;
+}
+#mic { background: #ffb300; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🤖 Manju AI</h1>
+<p>नमस्ते! मैं आपकी Manju AI हूँ।</p>
+
+<div id="chat">
+<p>Manju AI: नमस्ते! मुझसे बात कीजिए।</p>
+</div>
+
+<input id="message" placeholder="अपना सवाल लिखिए">
+<button onclick="sendMessage()">भेजें</button>
+<br>
+<button id="mic" onclick="startVoice()">🎤 बोलकर पूछें</button>
+<button onclick="speakLast()">🔊 सुनें</button>
+</div>
+
+<script>
+let lastAnswer = "नमस्ते! मैं Manju AI हूँ।";
+
+function addMessage(text) {
+  let chat = document.getElementById("chat");
+  let p = document.createElement("p");
+  p.textContent = text;
+  chat.appendChild(p);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function reply(text) {
+  lastAnswer = "आपने कहा: " + text +
+    "। मैं Manju AI हूँ। AI सर्वर जुड़ने पर मैं और सवालों के जवाब दे सकूँगी।";
+  addMessage("Manju AI: " + lastAnswer);
+}
+
+function sendMessage() {
+  let input = document.getElementById("message");
+  let text = input.value.trim();
+  if (!text) return;
+  addMessage("आप: " + text);
+  input.value = "";
+  reply(text);
+}
+
+function startVoice() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("इस ब्राउज़र में Voice सुविधा उपलब्ध नहीं है। Chrome इस्तेमाल करें।");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "hi-IN";
+  recognition.onresult = function(event) {
+    let text = event.results[0][0].transcript;
+    document.getElementById("message").value = text;
+    addMessage("आप: " + text);
+    reply(text);
+  };
+  recognition.onerror = function() {
+    alert("माइक की अनुमति जाँचें और फिर कोशिश करें।");
+  };
+  recognition.start();
+}
+
+function speakLast() {
+  if (!window.speechSynthesis) {
+    alert("Voice सुविधा उपलब्ध नहीं है।");
+    return;
+  }
+  let speech = new SpeechSynthesisUtterance(lastAnswer);
+  speech.lang = "hi-IN";
+  speechSynthesis.speak(speech);
+}
+</script>
+</body>
+</html>
+
