@@ -46,6 +46,7 @@ button {
 </style>
 </head>
 <body>
+
 <div class="container">
 <h1>🤖 Manju AI</h1>
 <p>नमस्ते! मैं आपकी Manju AI हूँ।</p>
@@ -65,48 +66,73 @@ button {
 let lastAnswer = "नमस्ते! मैं Manju AI हूँ।";
 
 function addMessage(text) {
-  let chat = document.getElementById("chat");
-  let p = document.createElement("p");
+  const chat = document.getElementById("chat");
+  const p = document.createElement("p");
   p.textContent = text;
   chat.appendChild(p);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function reply(text) {
-  lastAnswer = "आपने कहा: " + text +
-    "। मैं Manju AI हूँ। AI सर्वर जुड़ने पर मैं और सवालों के जवाब दे सकूँगी।";
-  addMessage("Manju AI: " + lastAnswer);
-}
+async function sendMessage() {
+  const input = document.getElementById("message");
+  const text = input.value.trim();
 
-function sendMessage() {
-  let input = document.getElementById("message");
-  let text = input.value.trim();
   if (!text) return;
+
   addMessage("आप: " + text);
   input.value = "";
-  reply(text);
+
+  lastAnswer = "जवाब तैयार हो रहा है...";
+  addMessage("Manju AI: जवाब तैयार हो रहा है...");
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Server में समस्या है");
+    }
+
+    lastAnswer = data.reply || "जवाब नहीं मिला।";
+    addMessage("Manju AI: " + lastAnswer);
+
+  } catch (error) {
+    lastAnswer = "माफ कीजिए, AI Server से जवाब नहीं मिला।";
+    addMessage("Manju AI: " + lastAnswer);
+    console.error(error);
+  }
 }
 
 function startVoice() {
   const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    alert("इस ब्राउज़र में Voice सुविधा उपलब्ध नहीं है। Chrome इस्तेमाल करें।");
+    alert("Chrome ब्राउज़र इस्तेमाल करें।");
     return;
   }
 
   const recognition = new SpeechRecognition();
   recognition.lang = "hi-IN";
+
   recognition.onresult = function(event) {
-    let text = event.results[0][0].transcript;
+    const text = event.results[0][0].transcript;
     document.getElementById("message").value = text;
-    addMessage("आप: " + text);
-    reply(text);
+    sendMessage();
   };
+
   recognition.onerror = function() {
     alert("माइक की अनुमति जाँचें और फिर कोशिश करें।");
   };
+
   recognition.start();
 }
 
@@ -115,11 +141,14 @@ function speakLast() {
     alert("Voice सुविधा उपलब्ध नहीं है।");
     return;
   }
-  let speech = new SpeechSynthesisUtterance(lastAnswer);
+
+  speechSynthesis.cancel();
+
+  const speech = new SpeechSynthesisUtterance(lastAnswer);
   speech.lang = "hi-IN";
   speechSynthesis.speak(speech);
 }
 </script>
+
 </body>
 </html>
-
